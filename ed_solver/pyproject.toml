@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "pybind11>=2.10"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ed_solver"
+version = "0.1.0"
+description = "Exact Diagonalization impurity solver for DMFT"
+requires-python = ">=3.8"
+dependencies = ["numpy"]
+
+[project.optional-dependencies]
+triqs = ["triqs"]
