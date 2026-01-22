@@ -49,7 +49,8 @@ def main():
 
             delta_old << S.Delta_iw
 
-            export_state(S, U, i, n_loops_max, converged)
+            if converged or i == n_loops_max - 1:
+                export_state(S, U)
             
             if converged:
                 break
@@ -58,29 +59,19 @@ def main():
                     print(f"\nReached max iterations ({n_loops_max}) without convergence (U = {U:.2f})\n")
 
 
-def export_state(S, U, i, n_max, conv):
+def export_state(S, U):
     Ustr = f'U{U:.2f}'
 
     with HDFArchive("data/ed_bethe.h5", 'a') as arch:
         if Ustr not in arch:
             arch.create_group(Ustr)
-        group = arch[Ustr]  
+        group = arch[Ustr]
 
-        group[f"G-{i}"]     = S.G_iw
-        group[f"Sigma-{i}"] = S.Sigma_iw
-        group[f"Delta-{i}"] = S.Delta_iw
+        group['G-res']     = S.G_iw
+        group['Sigma-res'] = S.Sigma_iw
+        group['Delta-res'] = S.Delta_iw
 
-    if conv or i == n_max - 1:
-        with HDFArchive("data/ed_bethe.h5", 'a') as arch:
-            if Ustr not in arch:
-                arch.create_group(Ustr)
-            group = arch[Ustr]
-
-            group['G-res']     = S.G_iw
-            group['Sigma-res'] = S.Sigma_iw
-            group['Delta-res'] = S.Delta_iw
-
-            group['double_occupancy'] = S.double_occupancy()
+        group['double_occupancy'] = S.double_occupancy()
 
 
 if __name__ == "__main__":
