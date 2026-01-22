@@ -65,4 +65,7 @@ class Solver:
         for spin in ['up', 'down']:
             for gf_positive in [self.G_iw[spin], self.Sigma_iw[spin]]:
                 self.extend_to_negative_freq(gf_positive)
+
+    def double_occupancy(self):
+        return self.cpp_solver.double_occupancy()
                 

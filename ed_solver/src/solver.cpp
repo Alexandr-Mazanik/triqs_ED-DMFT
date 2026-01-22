@@ -351,3 +351,15 @@ double Solver::init(double U, complex * Delta_up, complex * Delta_down,  int N_b
     
     return lnZ;
 }
+
+double Solver::double_occupancy() const {
+    double D = 0;
+    for1(m, NFock) {
+        double Dm = 0;
+        for1(j, NFock)
+            Dm += sqr(Psi[m][j]) * n(j, 0) * n(j, n_bath + 1);
+        D += expl(-Beta * E[m]) * Dm;
+    }
+    D /= Z;
+    return D;
+}

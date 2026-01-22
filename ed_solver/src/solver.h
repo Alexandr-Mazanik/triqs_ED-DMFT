@@ -34,6 +34,7 @@ public:
     complex * sigmau, * sigmad;
 
     double init(double U, complex * Delta_up, complex *Delta_down, int Nbath, double h_loc=0, double mu_loc=0);
+    double double_occupancy() const;
     
     ~Solver();
 };

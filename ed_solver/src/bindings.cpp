@@ -44,6 +44,9 @@ PYBIND11_MODULE(_ed_solver, m, py::mod_gil_not_used()) {
       "h_loc: local AF field\n"
       "mu_loc: chemical potential")
 
+    .def("double_occupancy", &Solver::double_occupancy,
+      "Returns the double occupancy ⟨n↑ n↓⟩")
+
     .def_property_readonly("G_up", [](const Solver& s) {
       return py::array_t<std::complex<double>>(s.Nw, s.gu);
     }, "Impurity Green's function (spin up) on positive Matsubara frequencies (shape: (Nw,))")
