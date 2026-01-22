@@ -80,6 +80,8 @@ def export_state(S, U, i, n_max, conv):
             group['Sigma-res'] = S.Sigma_iw
             group['Delta-res'] = S.Delta_iw
 
+            group['double_occupancy'] = S.double_occupancy()
+
 
 if __name__ == "__main__":
     main()
