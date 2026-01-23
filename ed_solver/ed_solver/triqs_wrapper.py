@@ -13,26 +13,34 @@ from ed_solver import EDLSolverCore
 
 class Solver:
     def __init__(self, beta, nbath_max=3, n_iw=1025, n_wED=20, method='Jacobi'):
-        
         if method == 'Jacobi':
             self.cpp_solver = EDSolverCore(beta, nbath_max, n_iw, n_wED)
         elif method == 'Lanczos':
             self.cpp_solver = EDLSolverCore(beta, nbath_max, n_iw, n_wED)
         else:
             raise RuntimeError(f"Invalid method: {method} - expected 'Jacobi' or 'Lanczos'.")
+
+        self.beta = beta
+        self.n_iw = n_iw       
+        self.nbath_max = nbath_max
+        self.lnZ = None
+
         self.method = method
         self.warn_seen = False
 
-        mesh = MeshImFreq(beta=beta, S='Fermion', n_max=n_iw)
-        self.Sigma_iw = BlockGf(mesh=mesh, gf_struct=[('up', 1), ('down', 1)])
+        iw_mesh = MeshImFreq(beta=beta, S='Fermion', n_max=n_iw)
+        iw_arr = np.array(list(iw_mesh.values()))
+        iw2_arr = -np.array(np.abs(iw_arr) ** 2, dtype=float)
+
+        self.Sigma_iw = BlockGf(mesh=iw_mesh, gf_struct=[('up', 1), ('down', 1)])
         self.Sigma_iw.zero()
         self.G_iw = self.Sigma_iw.copy()
-        self.Delta_iw = self.Sigma_iw.copy()
         
-        self.nbath_max = nbath_max
-        self.n_iw = n_iw       
-
-        self.lnZ = 0;
+        # default initial guess for Delta
+        self.Delta_iw = self.Sigma_iw.copy()
+        for spin in ['up', 'down']:
+            self.Delta_iw[spin].data[n_iw : 2 * n_iw, 0, 0] = -4j / np.sqrt(-iw2_arr[n_iw : 2 * n_iw] + 1)
+            self.extend_to_negative_freq(self.Delta_iw[spin])
     
     def extend_to_negative_freq(self, gf_positive):
         gf_positive.data[0 : self.n_iw] = np.conj(gf_positive.data[2 * self.n_iw : self.n_iw - 1 : -1])
