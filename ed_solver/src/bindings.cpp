@@ -47,6 +47,22 @@ PYBIND11_MODULE(_ed_solver, m, py::mod_gil_not_used()) {
     .def("double_occupancy", &Solver::double_occupancy,
       "Returns the double occupancy ⟨n↑ n↓⟩")
 
+    .def_property_readonly("eu", [](const Solver& s) {
+      return py::array_t<double>(s.Nbath_max, s.eu);
+    }, "Bath on-site energy levels for spin up (shape: Nbath_max,)")
+
+    .def_property_readonly("ed", [](const Solver& s) {
+      return py::array_t<double>(s.Nbath_max, s.ed);
+    }, "Bath on-site energy levels for spin down (shape: Nbath_max,)")
+
+    .def_property_readonly("t2u", [](const Solver& s) {
+      return py::array_t<double>(s.Nbath_max, s.t2u);
+    }, "Coupling strengths between impurity and bath sites for spin up (shape: Nbath_max,)")
+
+    .def_property_readonly("t2d", [](const Solver& s) {
+      return py::array_t<double>(s.Nbath_max, s.t2d);
+    }, "Coupling strengths between impurity and bath sites for spin down (shape: Nbath_max,)")
+
     .def_property_readonly("G_up", [](const Solver& s) {
       return py::array_t<std::complex<double>>(s.Nw, s.gu);
     }, "Impurity Green's function (spin up) on positive Matsubara frequencies (shape: (Nw,))")

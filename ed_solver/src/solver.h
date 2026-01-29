@@ -14,7 +14,6 @@ class Solver
 
     long double Z;
 
-    double * t2u, * t2d, *eu, *ed; 
     double adjust_bath_levels(complex * Delta_w, double * t2_bath, double * e_bath);
     double adjust_bath_couplings(complex * Delta_w, double * t2_bath,  double * e_bath);
 
@@ -30,11 +29,13 @@ public:
     complex * Iw;
     double * Iw2;
 
+    double * t2u, * t2d, *eu, *ed; 
     complex * gu, * gd;
     complex * sigmau, * sigmad;
 
     double init(double U, complex * Delta_up, complex *Delta_down, int Nbath, double h_loc=0, double mu_loc=0);
     double double_occupancy() const;
+
     
     ~Solver();
 };
