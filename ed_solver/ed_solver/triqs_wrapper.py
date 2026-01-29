@@ -1,4 +1,5 @@
 import numpy as np
+from dataclasses import dataclass, field
 
 try:
     from triqs.gf import *
@@ -9,6 +10,14 @@ except ImportError as e:
 
 from ed_solver import EDSolverCore
 from ed_solver import EDLSolverCore
+
+
+@dataclass
+class BathParameters:
+    eps_up: list[float] = field(default_factory=list)
+    eps_down: list[float] = field(default_factory=list)
+    t2_up: list[float] = field(default_factory=list)
+    t2_down: list[float] = field(default_factory=list)
 
 
 class Solver:
@@ -22,9 +31,11 @@ class Solver:
 
         self.beta = beta
         self.n_iw = n_iw       
-        self.nbath_max = nbath_max
         self.lnZ = None
 
+        self.nbath_max = nbath_max
+        self.bath_parameters = BathParameters()
+        
         self.method = method
         self.warn_seen = False
 
@@ -53,7 +64,7 @@ class Solver:
                                         self.Delta_iw['down'].data[self.n_iw : 2 * self.n_iw].squeeze(),
                                         nbath, h, mu)
         elif self.method == 'Lanczos':
-            if ((n_m == None or n_kr == None) and  not self.warn_seen):
+            if ((n_m == None or n_kr == None) and not self.warn_seen):
                 n_m = 10
                 n_kr = 10
                 print("Warning: n_m (number of eigenstates) and n_kr (Krylov subspace size) not set.\n"
@@ -73,6 +84,11 @@ class Solver:
         for spin in ['up', 'down']:
             for gf_positive in [self.G_iw[spin], self.Sigma_iw[spin]]:
                 self.extend_to_negative_freq(gf_positive)
+
+        self.bath_parameters.eps_up = self.cpp_solver.eu 
+        self.bath_parameters.eps_down = self.cpp_solver.ed 
+        self.bath_parameters.t2_up = self.cpp_solver.t2u 
+        self.bath_parameters.t2_down = self.cpp_solver.t2d 
 
     def double_occupancy(self):
         return self.cpp_solver.double_occupancy()
