@@ -1,19 +1,14 @@
 import numpy as np
 from dataclasses import dataclass, field
 
-try:
-    from triqs.gf import *
-except ImportError as e:
-    raise ImportError(
-        "Warning: TRIQS not found. TRIQS wrapper unavailable."
-    ) from e
+from triqs.gf import *
 
 from ed_solver import EDSolverCore
 from ed_solver import EDLSolverCore
 
 
 @dataclass
-class BathParameters:
+class Bath:
     eps_up: list[float] = field(default_factory=list)
     eps_down: list[float] = field(default_factory=list)
     t2_up: list[float] = field(default_factory=list)
@@ -34,7 +29,7 @@ class Solver:
         self.lnZ = None
 
         self.nbath_max = nbath_max
-        self.bath_parameters = BathParameters()
+        self.bath_parameters = Bath()
         
         self.method = method
         self.warn_seen = False
