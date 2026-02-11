@@ -11,6 +11,12 @@ from h5 import *
 from tqdm import tqdm
 
 
+RED     = "\033[31m"
+GREEN   = "\033[32m"
+YELLOW  = "\033[33m"
+RESET   = "\033[0m"
+
+
 @dataclass
 class DataPoint:
     T: float
@@ -26,7 +32,7 @@ class DataPoint:
 
 class ParDMFT:
     def __init__(self, solver, k_mesh, eps):
-        self.solver =solver
+        self.solver = solver
         self.k_mesh = k_mesh
         self.epsilon = eps
 
@@ -40,28 +46,42 @@ class ParDMFT:
             )
 
         converged = False
+        diff_up_prev = 0
+        diff_down_prev = 0
         G_loc_iw = self.solver.Sigma_iw.copy()
-        for it in tqdm(range(n_loops), 
-                       desc=f"Performing DMFT calculation for T = {self.data.T:.4f}, U = {self.data.U:.4f} ...",
-                       leave=False):
 
-            self.solver.solve(U=self.data.U, nbath=n_bath, h=self.data.h, mu=self.data.mu)
-            
-            G_loc_iw.zero()
-            for spin in ['up', 'down']:
-                for k in self.k_mesh.values():
-                    G_loc_iw[spin] += inverse(inverse(self.solver.G_iw[spin]) + 
-                                              self.solver.Delta_iw[spin] - self.epsilon(k, self.data.t))
-                G_loc_iw[spin] /= len(self.k_mesh)
+        with tqdm(range(n_loops), 
+                       desc=f"Performing DMFT for T = {self.data.T:.4f}, U = {self.data.U:.4f} ...",
+                       leave=False) as bar:
+            for it in bar:
+
+                self.solver.solve(U=self.data.U, nbath=n_bath, h=self.data.h, mu=self.data.mu)
                 
-            converged = (np.allclose(G_loc_iw['up'].data, self.solver.G_iw['up'].data, atol=atol, rtol=rtol) and
-                            np.allclose(G_loc_iw['down'].data, self.solver.G_iw['down'].data, atol=atol, rtol=rtol))         
-            if converged:
-                self.data.converged = True
-                break
+                G_loc_iw.zero()
+                for spin in ['up', 'down']:
+                    for k in self.k_mesh.values():
+                        G_loc_iw[spin] += inverse(inverse(self.solver.G_iw[spin]) + 
+                                                  self.solver.Delta_iw[spin] - self.epsilon(k, self.data.t))
+                    G_loc_iw[spin] /= len(self.k_mesh)
+                
+                diff_up   = np.max(np.abs(G_loc_iw['up'].data - self.solver.G_iw['up'].data))
+                diff_down = np.max(np.abs(G_loc_iw['down'].data - self.solver.G_iw['down'].data))
+                bar.set_postfix(
+                    du=bar_fmt(diff_up, diff_up_prev),
+                    dd=bar_fmt(diff_down, diff_down_prev)
+                )
+                diff_up_prev = diff_up
+                diff_down_prev = diff_down
 
-            for spin in ['up', 'down']:
-                self.solver.Delta_iw[spin] += alpha * (inverse(self.solver.G_iw[spin]) - inverse(G_loc_iw[spin]))  
+                converged = (np.allclose(G_loc_iw['up'].data, self.solver.G_iw['up'].data, atol=atol, rtol=rtol) and
+                                np.allclose(G_loc_iw['down'].data, self.solver.G_iw['down'].data, atol=atol, rtol=rtol)) 
+
+                if converged:
+                    self.data.converged = True
+                    break
+
+                for spin in ['up', 'down']:
+                    self.solver.Delta_iw[spin] += alpha * (inverse(self.solver.G_iw[spin]) - inverse(G_loc_iw[spin]))  
 
         if not converged:
             diff_up   = np.max(np.abs(G_loc_iw['up'].data   - self.solver.G_iw['up'].data))
@@ -159,3 +179,10 @@ class ParDMFT:
             
             group['converged'] = self.data.converged
             group['double_occupancy'] = self.data.DO
+
+
+def bar_fmt(curr, prev):
+    if curr <= prev:
+        return f"{GREEN}{curr:.2e}{RESET}"
+    else:
+        return f"{RED}{curr:.2e}{RESET}"
