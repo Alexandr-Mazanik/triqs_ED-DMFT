@@ -6,15 +6,10 @@ import numpy as np
 from triqs.gf import *
 
 from ed_solver import Bath, Solver
+from .dmft_bar import bar_fmt
 
 from h5 import *
 from tqdm import tqdm
-
-
-RED     = "\033[31m"
-GREEN   = "\033[32m"
-YELLOW  = "\033[33m"
-RESET   = "\033[0m"
 
 
 @dataclass
@@ -61,7 +56,7 @@ class ParDMFT:
                 for spin in ['up', 'down']:
                     for k in self.k_mesh.values():
                         G_loc_iw[spin] += inverse(inverse(self.solver.G_iw[spin]) + 
-                                                  self.solver.Delta_iw[spin] - self.epsilon(k, self.data.t))
+                                                  self.solver.Delta_iw[spin] - self.epsilon(k, self.data.t, spin))
                     G_loc_iw[spin] /= len(self.k_mesh)
                 
                 diff_up   = np.max(np.abs(G_loc_iw['up'].data - self.solver.G_iw['up'].data))
@@ -179,10 +174,3 @@ class ParDMFT:
             
             group['converged'] = self.data.converged
             group['double_occupancy'] = self.data.DO
-
-
-def bar_fmt(curr, prev):
-    if curr <= prev:
-        return f"{GREEN}{curr:.2e}{RESET}"
-    else:
-        return f"{RED}{curr:.2e}{RESET}"
