@@ -6,6 +6,7 @@ import warnings
 try:
     from .triqs_wrapper import Solver, Bath
     from .dmft import ParDMFT
+    from .dmft import MagneticParDMFT
     _triqs_available = True
 except ImportError:
     _triqs_available = False
@@ -28,5 +29,6 @@ __all__ = [
     "EDLSolverCore", 
     "Solver",
     "Bath",
-    "ParDMFT"
+    "ParDMFT",
+    "MagneticParDMFT"
 ]
