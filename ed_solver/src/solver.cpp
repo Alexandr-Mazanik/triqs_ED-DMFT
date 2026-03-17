@@ -363,3 +363,15 @@ double Solver::double_occupancy() const {
     D /= Z;
     return D;
 }
+
+double Solver::mean_occupancy() const {
+    double N = 0;
+    for1(m, NFock) {
+        double Nm = 0;
+        for1(j, NFock)
+            Nm += sqr(Psi[m][j]) * (n(j, 0) + n(j, n_bath + 1));
+        N += expl(-Beta * E[m]) * Nm;
+    }
+    N /= Z;
+    return N;
+}

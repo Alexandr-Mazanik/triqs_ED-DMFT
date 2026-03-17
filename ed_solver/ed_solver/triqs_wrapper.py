@@ -96,4 +96,7 @@ class Solver:
 
     def double_occupancy(self):
         return self.cpp_solver.double_occupancy()
+
+    def mean_occupancy(self):
+        return self.cpp_solver.mean_occupancy()
                 

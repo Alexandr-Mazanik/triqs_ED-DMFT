@@ -154,9 +154,11 @@ class MagneticParDMFT:
         except:
             raise FileNotFoundError(f"File not found: '{filename}'\n")
 
-    def calculate_observables(self, double_occupancy=False):
+    def calculate_observables(self, double_occupancy=False, mean_occupancy=False):
         if double_occupancy:
             self.data.DO = self.solver.double_occupancy()
+        if mean_occupancy:
+            self.data.n = self.solver.mean_occupancy()
 
     def export_solver_state(self, filename, direction="undirected"):
         Bstr = f'B{self.data.B:.4f}'
@@ -192,3 +194,4 @@ class MagneticParDMFT:
             
             group['converged'] = self.data.converged
             group['double_occupancy'] = self.data.DO
+            group['mean_occupancy'] = self.data.n
