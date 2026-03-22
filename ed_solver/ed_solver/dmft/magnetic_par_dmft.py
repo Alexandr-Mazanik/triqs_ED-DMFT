@@ -148,8 +148,10 @@ class MagneticParDMFT:
                 eu = group['eps_up']; ed = group['eps_down']
                 t2u = group['t2_up']; t2d = group['t2_down']
                 bath = Bath(eu, ed, t2u, t2d)
+                mu = group['mu']
 
                 self.solver.set_initial_guess(bath)
+                self.data = DataPoint(T=init_point.T, U=init_point.U, mu=mu)
 
         except:
             raise FileNotFoundError(f"File not found: '{filename}'\n")
@@ -187,11 +189,15 @@ class MagneticParDMFT:
             group['Sigma-iw'] = self.solver.Sigma_iw
             group['Delta-iw'] = self.solver.Delta_iw
 
+            group['mu'] = self.data.mu
+            group['h'] = self.data.h
+
             group['eps_up'] = self.solver.bath_parameters.eps_up
             group['eps_down'] = self.solver.bath_parameters.eps_down
             group['t2_up'] = self.solver.bath_parameters.t2_up
             group['t2_down'] = self.solver.bath_parameters.t2_down
             
             group['converged'] = self.data.converged
+
             group['double_occupancy'] = self.data.DO
             group['mean_occupancy'] = self.data.n

@@ -46,38 +46,39 @@ class ParDMFT:
         diff_down_prev = 0
         G_loc_iw = self.solver.Sigma_iw.copy()
 
-        with tqdm(range(n_loops), 
-                       desc=f"Performing DMFT for T = {self.data.T:.4f}, U = {self.data.U:.4f} ...",
-                       leave=False) as bar:
-            for it in bar:
+        bar = tqdm(range(n_loops), 
+                    desc=f"Performing DMFT for T = {self.data.T:.4f}, U = {self.data.U:.4f} ...",
+                    leave=False)
 
-                self.solver.solve(U=self.data.U, nbath=n_bath, h=self.data.h, mu=self.data.mu)
-                
-                G_loc_iw.zero()
-                for spin in ['up', 'down']:
-                    for k in self.k_mesh.values():
-                        G_loc_iw[spin] += inverse(inverse(self.solver.G_iw[spin]) + 
-                                                  self.solver.Delta_iw[spin] - self.epsilon(k, self.data.t, spin))
-                    G_loc_iw[spin] /= len(self.k_mesh)
-                
-                diff_up   = np.max(np.abs(G_loc_iw['up'].data - self.solver.G_iw['up'].data))
-                diff_down = np.max(np.abs(G_loc_iw['down'].data - self.solver.G_iw['down'].data))
-                bar.set_postfix(
-                    du=bar_fmt(diff_up, diff_up_prev),
-                    dd=bar_fmt(diff_down, diff_down_prev)
-                )
-                diff_up_prev = diff_up
-                diff_down_prev = diff_down
+        for it in bar:
 
-                converged = (np.allclose(G_loc_iw['up'].data, self.solver.G_iw['up'].data, atol=atol, rtol=rtol) and
-                                np.allclose(G_loc_iw['down'].data, self.solver.G_iw['down'].data, atol=atol, rtol=rtol)) 
+            self.solver.solve(U=self.data.U, nbath=n_bath, h=self.data.h, mu=self.data.mu)
+            
+            G_loc_iw.zero()
+            for spin in ['up', 'down']:
+                for k in self.k_mesh.values():
+                    G_loc_iw[spin] += inverse(inverse(self.solver.G_iw[spin]) + 
+                                              self.solver.Delta_iw[spin] - self.epsilon(k, self.data.t, spin))
+                G_loc_iw[spin] /= len(self.k_mesh)
+            
+            diff_up   = np.max(np.abs(G_loc_iw['up'].data - self.solver.G_iw['up'].data))
+            diff_down = np.max(np.abs(G_loc_iw['down'].data - self.solver.G_iw['down'].data))
+            bar.set_postfix(
+                du=bar_fmt(diff_up, diff_up_prev),
+                dd=bar_fmt(diff_down, diff_down_prev)
+            )
+            diff_up_prev = diff_up
+            diff_down_prev = diff_down
 
-                if converged:
-                    self.data.converged = True
-                    break
+            converged = (np.allclose(G_loc_iw['up'].data, self.solver.G_iw['up'].data, atol=atol, rtol=rtol) and
+                            np.allclose(G_loc_iw['down'].data, self.solver.G_iw['down'].data, atol=atol, rtol=rtol)) 
 
-                for spin in ['up', 'down']:
-                    self.solver.Delta_iw[spin] += alpha * (inverse(self.solver.G_iw[spin]) - inverse(G_loc_iw[spin]))  
+            if converged:
+                self.data.converged = True
+                break
+
+            for spin in ['up', 'down']:
+                self.solver.Delta_iw[spin] += alpha * (inverse(self.solver.G_iw[spin]) - inverse(G_loc_iw[spin]))  
 
         if not converged:
             diff_up   = np.max(np.abs(G_loc_iw['up'].data   - self.solver.G_iw['up'].data))
@@ -130,8 +131,10 @@ class ParDMFT:
                 eu = group['eps_up']; ed = group['eps_down']
                 t2u = group['t2_up']; t2d = group['t2_down']
                 bath = Bath(eu, ed, t2u, t2d)
+                mu = group['mu']
 
                 self.solver.set_initial_guess(bath)
+                self.data = DataPoint(T=init_point.T, U=init_point.U, mu=mu)
 
         except:
             raise FileNotFoundError(f"File not found: '{filename}'\n")
@@ -170,11 +173,15 @@ class ParDMFT:
             group['Sigma-iw'] = self.solver.Sigma_iw
             group['Delta-iw'] = self.solver.Delta_iw
 
+            group['mu'] = self.data.mu
+            group['h'] = self.data.h
+
             group['eps_up'] = self.solver.bath_parameters.eps_up
             group['eps_down'] = self.solver.bath_parameters.eps_down
             group['t2_up'] = self.solver.bath_parameters.t2_up
             group['t2_down'] = self.solver.bath_parameters.t2_down
             
             group['converged'] = self.data.converged
+
             group['double_occupancy'] = self.data.DO
             group['mean_occupancy'] = self.data.n

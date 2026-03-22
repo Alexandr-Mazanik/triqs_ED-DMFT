@@ -7,5 +7,5 @@ def bar_fmt(curr, prev):
     if curr <= prev:
         return f"{GREEN}{curr:.2e}{RESET}"
     else:
-        return f"{RED}{curr:.2e}{RESET}"
+        return f"{RED}{curr:.2e}{RESET}"\
         
