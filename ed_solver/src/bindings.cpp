@@ -50,6 +50,12 @@ PYBIND11_MODULE(_ed_solver, m, py::mod_gil_not_used()) {
     .def("mean_occupancy", &Solver::mean_occupancy,
       "Returns the mean occupancy ⟨n⟩")
 
+    .def("n_up", &Solver::mean_n_up,
+      "Returns the mean ⟨n↑⟩")
+
+    .def("n_down", &Solver::mean_n_down,
+      "Returns the mean ⟨n↓⟩")
+
     .def_property_readonly("eu", [](const Solver& s) {
       return py::array_t<double>(s.Nbath_max, s.eu);
     }, "Bath on-site energy levels for spin up (shape: Nbath_max,)")

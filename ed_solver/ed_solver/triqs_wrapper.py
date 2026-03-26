@@ -99,4 +99,10 @@ class Solver:
 
     def mean_occupancy(self):
         return self.cpp_solver.mean_occupancy()
+        
+    def n_up(self):
+        return self.cpp_solver.n_up()
+
+    def n_down(self):
+        return self.cpp_solver.n_down()
                 

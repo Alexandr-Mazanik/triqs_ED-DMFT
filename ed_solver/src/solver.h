@@ -36,6 +36,8 @@ public:
     double init(double U, complex * Delta_up, complex *Delta_down, int Nbath, double h_loc=0, double mu_loc=0);
     double double_occupancy() const;
     double mean_occupancy() const;
+    double mean_n_up() const;
+    double mean_n_down() const;
 
     
     ~Solver();

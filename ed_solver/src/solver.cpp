@@ -375,3 +375,27 @@ double Solver::mean_occupancy() const {
     N /= Z;
     return N;
 }
+
+double Solver::mean_n_up() const {
+    double N = 0;
+    for1(m, NFock) {
+        double Nm = 0;
+        for1(j, NFock)
+            Nm += sqr(Psi[m][j]) * n(j, 0);
+        N += expl(-Beta * E[m]) * Nm;
+    }
+    N /= Z;
+    return N;
+}
+
+double Solver::mean_n_down() const {
+    double N = 0;
+    for1(m, NFock) {
+        double Nm = 0;
+        for1(j, NFock)
+            Nm += sqr(Psi[m][j]) * n(j, n_bath + 1);
+        N += expl(-Beta * E[m]) * Nm;
+    }
+    N /= Z;
+    return N;
+}

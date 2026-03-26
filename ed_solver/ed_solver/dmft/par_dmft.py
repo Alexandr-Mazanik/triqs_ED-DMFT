@@ -20,8 +20,10 @@ class DataPoint:
     mu: float = 0.0
     h: float = 0.0
 
-    DO: float | None = None   # double occupancy
-    n: float | None = None    # mean occupancy 
+    DO: float | None = None      # double occupancy
+    n: float | None = None       # mean occupancy 
+    n_up: float | None = None    # mean ⟨n↑⟩ 
+    n_down: float | None = None  # mean ⟨n↓⟩
 
     converged: bool = False
 
@@ -139,11 +141,17 @@ class ParDMFT:
         except:
             raise FileNotFoundError(f"File not found: '{filename}'\n")
 
-    def calculate_observables(self, double_occupancy=False, mean_occupancy=False):
+    def calculate_observables(self, double_occupancy=False, 
+                                    mean_occupancy=False,
+                                    n_up=False, n_down=False):
         if double_occupancy:
             self.data.DO = self.solver.double_occupancy()
         if mean_occupancy:
             self.data.n = self.solver.mean_occupancy()
+        if n_up:
+            self.data.n_up = self.solver.n_up()
+        if n_down:
+            self.data.n_down = self.solver.n_down()
 
     def export_solver_state(self, filename, direction="undirected"):
         TUstr = f'T{self.data.T:.4f}U{self.data.U:.4f}'
@@ -185,3 +193,5 @@ class ParDMFT:
 
             group['double_occupancy'] = self.data.DO
             group['mean_occupancy'] = self.data.n
+            group['n_up'] = self.data.n_up
+            group['n_down'] = self.data.n_down
