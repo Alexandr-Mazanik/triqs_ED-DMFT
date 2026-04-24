@@ -347,7 +347,7 @@ double Solver::init(double U, complex * Delta_up, complex * Delta_down,  int N_b
         } 
     }
     
-    lnZ -= Beta * mu_loc;
+    //lnZ -= Beta * mu_loc;
     
     return lnZ;
 }
