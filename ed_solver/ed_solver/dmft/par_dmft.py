@@ -34,6 +34,8 @@ class ParDMFT:
         self.k_mesh = k_mesh
         self.epsilon = eps
 
+        self.G_loc_iw = self.solver.Sigma_iw.copy()
+
         self.data = None
 
     def solve(self, n_bath, alpha, n_loops, atol=1e-7, rtol=1e-5):
@@ -46,7 +48,6 @@ class ParDMFT:
         converged = False
         diff_up_prev = 0
         diff_down_prev = 0
-        G_loc_iw = self.solver.Sigma_iw.copy()
 
         bar = tqdm(range(n_loops), 
                     desc=f"Performing DMFT for T = {self.data.T:.4f}, U = {self.data.U:.4f} ...",
@@ -56,15 +57,15 @@ class ParDMFT:
 
             self.solver.solve(U=self.data.U, nbath=n_bath, h=self.data.h, mu=self.data.mu)
             
-            G_loc_iw.zero()
+            self.G_loc_iw.zero()
             for spin in ['up', 'down']:
                 for k in self.k_mesh.values():
-                    G_loc_iw[spin] += inverse(inverse(self.solver.G_iw[spin]) + 
+                    self.G_loc_iw[spin] += inverse(inverse(self.solver.G_iw[spin]) + 
                                               self.solver.Delta_iw[spin] - self.epsilon(k, self.data.t, spin))
-                G_loc_iw[spin] /= len(self.k_mesh)
+                self.G_loc_iw[spin] /= len(self.k_mesh)
             
-            diff_up   = np.max(np.abs(G_loc_iw['up'].data - self.solver.G_iw['up'].data))
-            diff_down = np.max(np.abs(G_loc_iw['down'].data - self.solver.G_iw['down'].data))
+            diff_up   = np.max(np.abs(self.G_loc_iw['up'].data - self.solver.G_iw['up'].data))
+            diff_down = np.max(np.abs(self.G_loc_iw['down'].data - self.solver.G_iw['down'].data))
             bar.set_postfix(
                 du=bar_fmt(diff_up, diff_up_prev),
                 dd=bar_fmt(diff_down, diff_down_prev)
@@ -72,19 +73,19 @@ class ParDMFT:
             diff_up_prev = diff_up
             diff_down_prev = diff_down
 
-            converged = (np.allclose(G_loc_iw['up'].data, self.solver.G_iw['up'].data, atol=atol, rtol=rtol) and
-                            np.allclose(G_loc_iw['down'].data, self.solver.G_iw['down'].data, atol=atol, rtol=rtol)) 
+            converged = (np.allclose(self.G_loc_iw['up'].data, self.solver.G_iw['up'].data, atol=atol, rtol=rtol) and
+                            np.allclose(self.G_loc_iw['down'].data, self.solver.G_iw['down'].data, atol=atol, rtol=rtol)) 
 
             if converged:
                 self.data.converged = True
                 break
 
             for spin in ['up', 'down']:
-                self.solver.Delta_iw[spin] += alpha * (inverse(self.solver.G_iw[spin]) - inverse(G_loc_iw[spin]))  
+                self.solver.Delta_iw[spin] += alpha * (inverse(self.solver.G_iw[spin]) - inverse(self.G_loc_iw[spin]))  
 
         if not converged:
-            diff_up   = np.max(np.abs(G_loc_iw['up'].data   - self.solver.G_iw['up'].data))
-            diff_down = np.max(np.abs(G_loc_iw['down'].data - self.solver.G_iw['down'].data))
+            diff_up   = np.max(np.abs(self.G_loc_iw['up'].data   - self.solver.G_iw['up'].data))
+            diff_down = np.max(np.abs(self.G_loc_iw['down'].data - self.solver.G_iw['down'].data))
 
             msg = (
                 f"\nWarning: DMFT cycle did not converge after {n_loops} iterations.\n"
@@ -178,6 +179,7 @@ class ParDMFT:
 
             group = subgroup[TUstr]
             group['G-iw']     = self.solver.G_iw
+            group['G_loc-iw'] = self.G_loc_iw
             group['Sigma-iw'] = self.solver.Sigma_iw
             group['Delta-iw'] = self.solver.Delta_iw
 
