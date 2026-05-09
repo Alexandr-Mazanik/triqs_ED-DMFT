@@ -142,10 +142,17 @@ class ParDMFT:
 
         except:
             raise FileNotFoundError(f"File not found: '{filename}'\n")
+    
+    def lattice_free_energy(self):
+        F_imp = self.solver.impurity_free_energy()
+        F = F_imp
+
+        return F
 
     def calculate_observables(self, double_occupancy=False, 
                                     mean_occupancy=False,
-                                    n_up=False, n_down=False):
+                                    n_up=False, n_down=False,
+                                    free_energy=False):
         if double_occupancy:
             self.data.DO = self.solver.double_occupancy()
         if mean_occupancy:
@@ -154,6 +161,8 @@ class ParDMFT:
             self.data.n_up = self.solver.n_up()
         if n_down:
             self.data.n_down = self.solver.n_down()
+        if free_energy:
+            self.data.F = self.lattice_free_energy()
 
     def export_solver_state(self, filename, direction="undirected"):
         TUstr = f'T{self.data.T:.4f}U{self.data.U:.4f}'
@@ -198,3 +207,4 @@ class ParDMFT:
             group['mean_occupancy'] = self.data.n
             group['n_up'] = self.data.n_up
             group['n_down'] = self.data.n_down
+            group['F'] = self.data.F

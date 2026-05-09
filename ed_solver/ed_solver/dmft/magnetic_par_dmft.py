@@ -160,29 +160,29 @@ class MagneticParDMFT:
         F_imp = self.solver.impurity_free_energy()
         F = F_imp
 
-        G_imp = BlockGf(mesh=self.solver.Sigma_iw.mesh, gf_struct=[('up', self.data.q), ('down', self.data.q)])
-        t2 = {'up': self.solver.bath_parameters.t2_up, 'down': self.solver.bath_parameters.t2_down}
+        #G_imp = BlockGf(mesh=self.solver.Sigma_iw.mesh, gf_struct=[('up', self.data.q), ('down', self.data.q)])
+        #t2 = {'up': self.solver.bath_parameters.t2_up, 'down': self.solver.bath_parameters.t2_down}
 
-        for spin in ['up', 'down']:
-            Delta_F = 0
+        #for spin in ['up', 'down']:
+        #    Delta_F = 0
             
-            G_imp[spin].data[:, np.arange(self.data.q), np.arange(self.data.q)] = self.solver.G_iw[spin].data[:, 0, 0, None]
+        #    G_imp[spin].data[:, np.arange(self.data.q), np.arange(self.data.q)] = self.solver.G_iw[spin].data[:, 0, 0, None]
 
-            M = Gf(mesh=self.solver.Sigma_iw.mesh, target_shape=(self.data.q, self.data.q))
-            m = M.copy()
-            m.data[:, np.arange(self.data.q), np.arange(self.data.q)] = (inverse(self.solver.G_iw[spin]) + 
+        #    M = Gf(mesh=self.solver.Sigma_iw.mesh, target_shape=(self.data.q, self.data.q))
+        #    m = M.copy()
+        #    m.data[:, np.arange(self.data.q), np.arange(self.data.q)] = (inverse(self.solver.G_iw[spin]) + 
                                                                             self.solver.Delta_iw[spin]).data[:, 0, 0, None]   
-            k_accumulator = np.zeros(len(G_imp[spin].mesh), dtype=np.float64)
+        #    k_accumulator = np.zeros(len(G_imp[spin].mesh), dtype=np.float64)
 
-            for k in self.k_mesh.values():
-                M.data[:] = m.data[:] - self.epsilon(k, self.data.t, self.data.B, self.data.q, spin)
-                G_frac_data = (G_imp[spin] * M).data
+        #    for k in self.k_mesh.values():
+        #        M.data[:] = m.data[:] - self.epsilon(k, self.data.t, self.data.B, self.data.q, spin)
+        #        G_frac_data = (G_imp[spin] * M).data
                 
-                signs, logdets = np.linalg.slogdet(G_frac_data)
+        #        signs, logdets = np.linalg.slogdet(G_frac_data)
                 
-                k_accumulator += logdets
+        #        k_accumulator += logdets
             
-            k_accumulator /= (self.data.q * len(self.k_mesh))
+        #    k_accumulator /= (self.data.q * len(self.k_mesh))
 
             #iw_arr = np.array([iw.imag for iw in G_imp[spin].mesh], dtype=np.float64)
 
@@ -191,10 +191,10 @@ class MagneticParDMFT:
 
             #k_accumulator -= tail 
 
-            Delta_F = np.sum(k_accumulator) / self.solver.beta
+            #Delta_F = np.sum(k_accumulator) / self.solver.beta
             #Delta_F += -(self.solver.beta / 4) * A_spin
             
-            F -= Delta_F
+            #F -= Delta_F
 
         return F
                 
@@ -242,6 +242,7 @@ class MagneticParDMFT:
 
             group['mu'] = self.data.mu
             group['h'] = self.data.h
+            group['q'] = self.data.q
 
             group['eps_up'] = self.solver.bath_parameters.eps_up
             group['eps_down'] = self.solver.bath_parameters.eps_down
