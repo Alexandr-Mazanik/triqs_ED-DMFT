@@ -156,9 +156,52 @@ class MagneticParDMFT:
         except:
             raise FileNotFoundError(f"File not found: '{filename}'\n")
 
+    def lattice_free_energy(self):
+        F_imp = self.solver.impurity_free_energy()
+        F = F_imp
+
+        G_imp = BlockGf(mesh=self.solver.Sigma_iw.mesh, gf_struct=[('up', self.data.q), ('down', self.data.q)])
+        t2 = {'up': self.solver.bath_parameters.t2_up, 'down': self.solver.bath_parameters.t2_down}
+
+        for spin in ['up', 'down']:
+            Delta_F = 0
+            
+            G_imp[spin].data[:, np.arange(self.data.q), np.arange(self.data.q)] = self.solver.G_iw[spin].data[:, 0, 0, None]
+
+            M = Gf(mesh=self.solver.Sigma_iw.mesh, target_shape=(self.data.q, self.data.q))
+            m = M.copy()
+            m.data[:, np.arange(self.data.q), np.arange(self.data.q)] = (inverse(self.solver.G_iw[spin]) + 
+                                                                            self.solver.Delta_iw[spin]).data[:, 0, 0, None]   
+            k_accumulator = np.zeros(len(G_imp[spin].mesh), dtype=np.float64)
+
+            for k in self.k_mesh.values():
+                M.data[:] = m.data[:] - self.epsilon(k, self.data.t, self.data.B, self.data.q, spin)
+                G_frac_data = (G_imp[spin] * M).data
+                
+                signs, logdets = np.linalg.slogdet(G_frac_data)
+                
+                k_accumulator += logdets
+            
+            k_accumulator /= (self.data.q * len(self.k_mesh))
+
+            #iw_arr = np.array([iw.imag for iw in G_imp[spin].mesh], dtype=np.float64)
+
+            #A_spin = -2 * self.data.t**2 + np.sum(t2[spin])
+            #tail = - A_spin / (iw_arr**2)
+
+            #k_accumulator -= tail 
+
+            Delta_F = np.sum(k_accumulator) / self.solver.beta
+            #Delta_F += -(self.solver.beta / 4) * A_spin
+            
+            F -= Delta_F
+
+        return F
+                
     def calculate_observables(self, double_occupancy=False, 
                                     mean_occupancy=False,
-                                    n_up=False, n_down=False):
+                                    n_up=False, n_down=False,
+                                    free_energy=False):
         if double_occupancy:
             self.data.DO = self.solver.double_occupancy()
         if mean_occupancy:
@@ -167,6 +210,8 @@ class MagneticParDMFT:
             self.data.n_up = self.solver.n_up()
         if n_down:
             self.data.n_down = self.solver.n_down()
+        if free_energy:
+            self.data.F = self.lattice_free_energy()
 
     def export_solver_state(self, filename, direction="undirected"):
         Bstr = f'B{self.data.B:.4f}'
@@ -209,3 +254,4 @@ class MagneticParDMFT:
             group['mean_occupancy'] = self.data.n
             group['n_up'] = self.data.n_up
             group['n_down'] = self.data.n_down
+            group['F'] = self.data.F

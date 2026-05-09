@@ -105,4 +105,8 @@ class Solver:
 
     def n_down(self):
         return self.cpp_solver.n_down()
+
+    def impurity_free_energy(self):
+        F_imp = - self.lnZ / self.beta
+        return F_imp
                 

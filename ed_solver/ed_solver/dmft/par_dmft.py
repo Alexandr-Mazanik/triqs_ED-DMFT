@@ -24,6 +24,7 @@ class DataPoint:
     n: float | None = None       # mean occupancy 
     n_up: float | None = None    # mean ⟨n↑⟩ 
     n_down: float | None = None  # mean ⟨n↓⟩
+    F: float | None = None       # lattice free energy
 
     converged: bool = False
 
